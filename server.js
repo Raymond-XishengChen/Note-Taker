@@ -37,9 +37,25 @@ app.get('/api/notes', (req, res) =>{
     })
 });
 
+// GET specific note from saved list
+app.get('/api/notes/:id', (req,res) => {
+    const note_ID = req.params.id;
+    fs.readFile((path.join(__dirname, './db/db.json')),(error, data) => {
+        if (error){
+            console.error(error);
+        } else {
+            const result = json.filter((note) => note.id === note_ID);
+            return result.length > 0
+            ? res.json(result)
+            : res.json('No content is saved')
+        }
+    })
+
+})
+
 // Post action, writing new notes to list and save to database
 app.post('/api/notes', (req, res)=> {
-    const { title, text, noteID } = req.body;
+    const { title, text, id } = req.body;
 
     if (req.body){
 
@@ -47,7 +63,7 @@ app.post('/api/notes', (req, res)=> {
         const newNote = {
             title,
             text,
-            noteID: uuidv4(),
+            id: uuidv4(),
         };
 
         // Read the database, grabbing all the notes
@@ -68,7 +84,7 @@ app.post('/api/notes', (req, res)=> {
                         console.log(`\nData written to database successfully!`);
                     }
                 });
-                
+
                 // Update the list on the webpage
                 res.json(newNote);
             }
@@ -76,6 +92,31 @@ app.post('/api/notes', (req, res)=> {
     }
 })
 
+
+
+// Delete action, deleting a note from the list and update at the webpage
+app.delete('/api/notes/:id', (req, res) =>{
+    // console.log(req);
+    const note_ID = req.params.id;
+    console.log(note_ID);
+    fs.readFile((path.join(__dirname, './db/db.json')),(error, data) => {
+        if (error){
+            console.error(error)
+        } else {
+            const parsedData =JSON.parse(data);
+            const result = parsedData.filter((note) => note.id !== note_ID);
+            console.log(result);
+            fs.writeFile((path.join(__dirname, './db/db.json')), JSON.stringify(result), (error)=> {
+                if(error){
+                    console.error(error);
+                } else {
+                    console.log(`\nUpdated data written to database successfully!`);
+                }
+            });
+            res.json(result);
+        } 
+    })
+})
 
 app.listen(PORT, ()=>
     console.log(`App listening at http://localhost:${PORT}`)
